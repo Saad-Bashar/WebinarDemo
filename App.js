@@ -1,33 +1,28 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View, Image, ScrollView, Pressable, LayoutAnimation } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import PrivacyPolicy from './PrivacyPolicy';
 
 const categories = ["men's clothing", "jewelery", "electronics", "women's clothing"]
 
 function App() {
-  const [products, setProducts] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
-  const [selectedCategory, setSelectedCategory] = React.useState(null);
-  const productsRef = React.useRef([]);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const productsRef = useRef([]);
 
   useEffect(() => {  
     const getProducts = async () => {
-      const products = await (await fetch("https://fakestoreapi.com/products")).json();
-      setProducts(products);
+      const response = await fetch("https://fakestoreapi.com/products");
+      const products = await response.json();
+
       productsRef.current = products;
+      setProducts(products);
       setLoading(false);
     }
+
     getProducts()
   }, []);
-
-  useEffect(() => {
-    if (selectedCategory) {
-      const filteredProducts = productsRef.current.filter(product => product.category === selectedCategory);
-      setProducts(filteredProducts);
-    } else {
-      setProducts(productsRef.current);
-    }
-  }, [selectedCategory]);
 
   if(loading) {
     return (
@@ -53,7 +48,7 @@ function App() {
   return (
     <SafeAreaView>
       <ScrollView 
-        contentContainerStyle={{paddingHorizontal: 15}} 
+        contentContainerStyle={{paddingHorizontal: 15, paddingVertical: 15}} 
         horizontal
         showsHorizontalScrollIndicator={false}
       >
@@ -63,9 +58,9 @@ function App() {
             return (
               <Pressable 
                 onPress={() => {
-                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-                  // if it is already selected, make it null
+                  LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
                   setSelectedCategory(isActive ? null : category);
+                  setProducts(productsRef.current.filter(product => product.category === category))
                 }} 
                 style={[styles.category, isActive && styles.activeCategory]} 
                 key={category}
@@ -82,6 +77,7 @@ function App() {
         renderItem={renderItem}
         contentContainerStyle={styles.list}
         numColumns={2}
+        ListHeaderComponent={() => <View style={{paddingBottom: 15}}><Text style={{ fontSize: 24, fontWeight: 'bold'}}>Products</Text></View>}
       />
     </SafeAreaView>
   );
@@ -116,11 +112,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   category: {
-    padding: 10,
     borderWidth: 1, 
     marginRight: 5,
     borderColor: 'purple',
     borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  categoryTitle: {
+    paddingHorizontal: 10,
+    paddingVertical: 10,
   },
   activeTitle: {
     color: '#fff',
